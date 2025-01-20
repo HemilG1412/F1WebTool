@@ -30,13 +30,27 @@ def plot_track(lap, weekend, year, driver):
     color = lap.telemetry['Speed']
 
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=x, y=y, mode='lines', line=dict(color='black', width=16), name='Track'))
-    fig.add_trace(go.Scatter(x=x, y=y, mode='lines', line=dict(color='plasma', width=5, colorscale='plasma'), name='Speed'))
 
-    fig.update_layout(title=f'{weekend.name} {year} - {driver} - Speed',
-                      xaxis_title='X',
-                      yaxis_title='Y',
-                      showlegend=False)
+    # Create a scatter plot with a colorscale
+    fig.add_trace(go.Scatter(
+        x=x, 
+        y=y, 
+        mode='lines', 
+        line=dict(width=5),  # Set a fixed line width
+        marker=dict(
+            color=color,
+            colorscale='plasma',  # Use colorscale for color mapping
+            colorbar=dict(title='Speed')
+        ),
+        name='Speed'
+    ))
+
+    fig.update_layout(
+        title=f'{weekend.name} {year} - {driver} - Speed',
+        xaxis_title='X',
+        yaxis_title='Y',
+        showlegend=False
+    )
     return fig
 
 def main():
