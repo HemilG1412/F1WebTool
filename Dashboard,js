@@ -1,0 +1,55 @@
+import React, { useState } from 'react';
+import { getCLS, getFID, getFCP, getLCP, getTTFB } from 'web-vitals';
+
+function Dashboard() {
+  const [year, setYear] = useState(2024);
+  const [track, setTrack] = useState('Abu Dhabi');
+  const [session, setSession] = useState('R');
+  const [driver, setDriver] = useState('LEC');
+  const [plots, setPlots] = useState({ speed_plot: '', track_plot: '' });
+
+const fetchPlots = async () => {
+  const response = await fetch('http://localhost:5000/get_plots', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ year, track, session, driver }),
+  });
+  const data = await response.json();
+  setPlots(data);
+};
+
+  return (
+    <div>
+      <h1>F1 Driver Dashboard</h1>
+      <form onSubmit={(e) => { e.preventDefault(); fetchPlots(); }}>
+        <label>
+          Year:
+          <input type="number" value={year} onChange={(e) => setYear(e.target.value)} />
+        </label>
+        <label>
+          Track:
+          <input type="text" value={track} onChange={(e) => setTrack(e.target.value)} />
+        </label>
+        <label>
+          Session:
+          <input type="text" value={session} onChange={(e) => setSession(e.target.value)} />
+        </label>
+        <label>
+          Driver:
+          <input type="text" value={driver} onChange={(e) => setDriver(e.target.value)} />
+        </label>
+        <button type="submit">Get Plots</button>
+      </form>
+      <div>
+        <h2>Speed Plot</h2>
+        {plots.speed_plot && <img src={`data:image/png;base64,${plots.speed_plot}`} alt="Speed Plot" />}
+      </div>
+      <div>
+        <h2>Track Plot</h2>
+        {plots.track_plot && <img src={`data:image/png;base64,${plots.track_plot}`} alt="Track Plot" />}
+      </div>
+    </div>
+  );
+}
+
+export default Dashboard;
