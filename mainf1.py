@@ -5,7 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import fastf1.plotting
 
-@st.cache
+@st.cache_data
 def load_session_data(year, track, sesh):
     """Load the session data for the given year, track, and session."""
     try:
@@ -66,7 +66,7 @@ def plot_track(lap, weekend, year, driver):
 
 def main():
     st.sidebar.title("F1 Dashboard")
-    page = st.sidebar.selectbox("Select a page", ["Speed Plot", "Lap Times", "Speed vs. Distance", "Summary Statistics"])
+    page = st.sidebar.selectbox("Select a page", ["Speed Plot", "Lap Times", "Speed vs. Distance", "Summary Statistics", "Track Plot"])
 
     years = f1.get_event_schedule().Year.unique()
     tracks = f1.get_event_schedule().EventName.unique()
@@ -101,6 +101,13 @@ def main():
                 display_summary_statistics(driver_car_data, driver)
             except KeyError:
                 st.warning(f"No summary statistics available for driver {driver} in this session.")
+        elif page == "Track Plot":
+            try:
+                lap = session.laps.pick_driver(driver).iloc[0]
+                track_fig = plot_track(lap, session.event, year, driver)
+                st.plotly_chart(track_fig, use_container_width=True)
+            except KeyError:
+                st.warning(f"No track data available for driver {driver} in this session.")
 
 if __name__ == "__main__":
     main()
