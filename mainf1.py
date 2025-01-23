@@ -4,7 +4,9 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 import fastf1.plotting
+from streamlit_cache import cache
 
+@cache
 def load_session_data(year, track, sesh):
     """Load the session data for the given year, track, and session."""
     try:
@@ -22,6 +24,30 @@ def plot_speed(driver_car_data, driver):
 
     fig = px.line(x=t, y=vCar, labels={'x': 'Time', 'y': 'Speed [Km/h]'}, title=f'{driver} Speed Plot')
     return fig
+
+def plot_lap_times(session, driver):
+    """Generate the lap times plot for the given driver using Plotly."""
+    laps = session.laps.pick_driver(driver)
+    lap_times = laps['LapTime'].dt.total_seconds()
+
+    fig = px.line(x=laps['LapNumber'], y=lap_times, labels={'x': 'Lap Number', 'y': 'Lap Time [s]'}, title=f'{driver} Lap Times')
+    return fig
+
+def plot_speed_vs_distance(driver_car_data, driver):
+    """Generate the speed vs. distance scatter plot for the given driver car data using Plotly."""
+    distance = driver_car_data['Distance']
+    vCar = driver_car_data['Speed']
+
+    fig = px.scatter(x=distance, y=vCar, labels={'x': 'Distance [m]', 'y': 'Speed [Km/h]'}, title=f'{driver} Speed vs. Distance')
+    return fig
+
+def display_summary_statistics(driver_car_data, driver):
+    """Display summary statistics for the given driver car data."""
+    vCar = driver_car_data['Speed']
+    st.write(f"### {driver} Speed Summary Statistics")
+    st.write(f"Mean Speed: {np.mean(vCar):.2f} Km/h")
+    st.write(f"Max Speed: {np.max(vCar):.2f} Km/h")
+    st.write(f"Min Speed: {np.min(vCar):.2f} Km/h")
 
 def plot_track(lap, weekend, year, driver):
     """Generate the track plot for the given lap data using Plotly."""
@@ -44,15 +70,21 @@ def main():
     st.title('F1 Driver Analysis')
 
     # Sidebar inputs for user interaction
-    year = st.sidebar.selectbox('Year', [2023, 2024])  # Add more years as needed
-    track = st.sidebar.selectbox('Track', ['Abu Dhabi', 'Monza', 'Silverstone'])  # Add more tracks
-    sesh = st.sidebar.selectbox('Session', ['FP1', 'FP2', 'FP3', 'Q', 'R'])
-    driver = st.sidebar.selectbox('Driver', ['LEC', 'VER', 'HAM', 'NOR'])  # Add more drivers
+    years = f1.get_event_schedule().Year.unique()
+    tracks = f1.get_event_schedule().EventName.unique()
+    sessions = ['FP1', 'FP2', 'FP3', 'Q', 'R']
+
+    year = st.sidebar.selectbox('Year', years)
+    track = st.sidebar.selectbox('Track', tracks)
+    sesh = st.sidebar.selectbox('Session', sessions)
 
     # Load session data
     session = load_session_data(year, track, sesh)
     if session is None:
         return
+
+    drivers = session.laps['Driver'].unique()
+    driver = st.sidebar.selectbox('Driver', drivers)
 
     # Speed Plot
     try:
@@ -71,6 +103,27 @@ def main():
         st.plotly_chart(track_fig, use_container_width=True)
     except KeyError:
         st.warning(f"No telemetry data available for driver {driver} in this session.")
+
+    # Lap Times Plot
+    try:
+        lap_times_fig = plot_lap_times(session, driver)
+        st.plotly_chart(lap_times_fig, use_container_width=True)
+    except KeyError:
+        st.warning(f"No lap times data available for driver {driver} in this session.")
+
+    # Speed vs. Distance Plot
+    try:
+        driver_car_data = session.laps.pick_driver(driver).get_car_data().add_distance()
+        speed_vs_distance_fig = plot_speed_vs_distance(driver_car_data, driver)
+        st.plotly_chart(speed_vs_distance_fig, use_container_width=True)
+    except KeyError:
+        st.warning(f"No speed vs. distance data available for driver {driver} in this session.")
+
+    # Display Summary Statistics
+    try:
+        display_summary_statistics(driver_car_data, driver)
+    except KeyError:
+        st.warning(f"No summary statistics available for driver {driver} in this session.")
 
 if __name__ == "__main__":
     main()
