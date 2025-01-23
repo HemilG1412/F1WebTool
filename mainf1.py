@@ -68,8 +68,14 @@ def main():
     st.sidebar.title("F1 Dashboard")
     page = st.sidebar.selectbox("Select a page", ["Speed Plot", "Lap Times", "Speed vs. Distance", "Summary Statistics", "Track Plot"])
 
-    years = f1.get_event_schedule().Year.unique()
-    tracks = f1.get_event_schedule().EventName.unique()
+    try:
+        event_schedule = f1.get_event_schedule()
+        years = event_schedule.Year.unique()
+        tracks = event_schedule.EventName.unique()
+    except Exception as e:
+        st.error(f"Error fetching event schedule: {e}")
+        st.stop()
+
     sessions = ['FP1', 'FP2', 'FP3', 'Q', 'R']
 
     year = st.sidebar.selectbox('Year', years)
