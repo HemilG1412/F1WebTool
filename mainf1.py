@@ -4,9 +4,8 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 import fastf1.plotting
-from streamlit_cache import cache
 
-@cache
+@st.cache
 def load_session_data(year, track, sesh):
     """Load the session data for the given year, track, and session."""
     try:
